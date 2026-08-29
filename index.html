@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة تجارة الهواتف والمالية المتكامل</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- القائمة الجانبية -->
+        <aside class="sidebar">
+            <div class="brand">
+                <h2 id="storeBrandName">متجر الهواتف</h2>
+                <span class="badge">النظام المالي والمخزون</span>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-page="dashboard"><span class="icon">📊</span> لوحة التحكم</button>
+                <button class="nav-item" data-page="inventory"><span class="icon">📱</span> الأجهزة الحالية</button>
+                <button class="nav-item" data-page="add-device"><span class="icon">➕</span> إضافة جهاز جديد</button>
+                <button class="nav-item" data-page="sales"><span class="icon">💰</span> الأجهزة المباعة</button>
+                <button class="nav-item" data-page="exchanges"><span class="icon">🔄</span> حركة الاستبدالات</button>
+                <button class="nav-item" data-page="finances"><span class="icon">💸</span> الخزينة والمصاريف</button>
+                <button class="nav-item" data-page="profits"><span class="icon">📈</span> التقارير والأرباح</button>
+                <button class="nav-item" data-page="transactions"><span class="icon">📜</span> سجل العمليات</button>
+                <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> الإعدادات والنسخ</button>
+            </nav>
+        </aside>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <div id="toastContainer" class="toast-container"></div>
+
+            <!-- 1. لوحة التحكم -->
+            <section id="dashboard" class="page-section active">
+                <header class="page-header">
+                    <h1>لوحة التحكم والملخص المالي</h1>
+                    <p>متابعة حركة الأجهزة، السيولة، والمصاريف لحظة بلحظة</p>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="title">رأس المال المبدئي</span>
+                        <span class="value" id="statCapital">0 ج.م</span>
+                    </div>
+                    <div class="stat-card accent">
+                        <span class="title">الكاش/السيولة الحالية المتاحة</span>
+                        <span class="value" id="statCashHand">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">قيمة المخزون الحالي</span>
+                        <span class="value" id="statInventoryValue">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">إجمالي رأس المال الفعلي الحالي</span>
+                        <span class="value" id="statTotalNetWorth">0 ج.م</span>
+                    </div>
+                    <div class="stat-card danger">
+                        <span class="title">إجمالي المصاريف العامة</span>
+                        <span class="value danger-text" id="statTotalExpenses">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">صافي أرباح الأجهزة والمبيعات</span>
+                        <span class="value accent-text" id="statNetProfits">0 ج.م</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-tables">
+                    <div class="card-table">
+                        <h3>آخر الأجهزة المضافة للمخزن</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الجهاز</th>
+                                        <th>اللون</th>
+                                        <th>التكلفة</th>
+                                        <th>التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashRecentAdded"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-table">
+                        <h3>آخر عمليات البيع</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الجهاز</th>
+                                        <th>سعر البيع</th>
+                                        <th>الربح</th>
+                                        <th>التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashRecentSales"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. الأجهزة الموجودة -->
+            <section id="inventory" class="page-section">
+                <header class="page-header">
+                    <h1>الأجهزة المتاحة بالمخزن</h1>
+                    <div class="filter-bar">
+                        <input type="text" id="inventorySearch" placeholder="بحث باسم الجهاز، اللون، السيريال..."
+                            class="input-field">
+                        <select id="inventoryFilterOS" class="input-field">
+                            <option value="ALL">جميع الأنظمة</option>
+                            <option value="iPhone">iPhone</option>
+                            <option value="Android">Android</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div class="table-responsive card-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>الجهاز والشركة</th>
+                                <th>اللون</th>
+                                <th>المساحة والرام</th>
+                                <th>السيريال / IMEI</th>
+                                <th>الحالة والبطارية</th>
+                                <th>التكلفة الفعلية</th>
+                                <th>السعر المتوقع</th>
+                                <th>التاريخ</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. إضافة وتعديل جهاز -->
+            <section id="add-device" class="page-section">
+                <header class="page-header">
+                    <h1 id="addFormTitle">إضافة جهاز جديد للمخزن</h1>
+                </header>
+
+                <form id="deviceForm" class="form-container">
+                    <input type="hidden" id="editDeviceId">
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>اسم الجهاز *</label>
+                            <input type="text" id="devName" required class="input-field"
+                                placeholder="مثال: iPhone 15 Pro Max">
+                        </div>
+                        <div class="form-group">
+                            <label>الشركة المصنعة *</label>
+                            <input type="text" id="devBrand" required class="input-field"
+                                placeholder="Apple, Samsung, Xiaomi">
+                        </div>
+                        <div class="form-group">
+                            <label>اللون *</label>
+                            <input type="text" id="devColor" required class="input-field"
+                                placeholder="مثال: أزرق تيتانيوم، أسود، أسود ملكي">
+                        </div>
+                        <div class="form-group">
+                            <label>نظام التشغيل *</label>
+                            <select id="devType" required class="input-field">
+                                <option value="iPhone">iPhone (iOS)</option>
+                                <option value="Android">Android</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>السعة التخزينية *</label>
+                            <input type="text" id="devStorage" required class="input-field" placeholder="256 GB">
+                        </div>
+                        <div class="form-group">
+                            <label>الرام (RAM)</label>
+                            <input type="text" id="devRam" class="input-field" placeholder="8 GB">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم السيريال / Serial / IMEI</label>
+                            <input type="text" id="devImei" class="input-field" placeholder="اختياري لتمبيز الجهاز">
+                        </div>
+                        <div class="form-group">
+                            <label>حالة الجهاز *</label>
+                            <select id="devCondition" required class="input-field">
+                                <option value="مستعمل بحالة الزيرو">مستعمل بحالة الزيرو</option>
+                                <option value="مستعمل">مستعمل</option>
+                                <option value="جديد كرتونة مقفولة">جديد (Zero/Sealed)</option>
+                                <option value="مجدد / معطل جزئياً">مجدد / صيانة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>نسبة البطارية (%)</label>
+                            <input type="number" id="devBattery" min="1" max="100" class="input-field"
+                                placeholder="مثال: 89">
+                        </div>
+                        <div class="form-group">
+                            <label>سعر الشراء الأساسي (ج.م) *</label>
+                            <input type="number" id="devBuyPrice" min="0" step="any" required class="input-field"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>مصاريف إضافية للجهاز (صيانة/شحن/جراب)</label>
+                            <input type="number" id="devExtraExpenses" min="0" step="any" value="0" class="input-field">
+                        </div>
+                        <div class="form-group">
+                            <label>السعر المتوقع للبيع (ج.م) *</label>
+                            <input type="number" id="devExpectedPrice" min="0" step="any" required class="input-field"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>طريقة الشراء / الحصول</label>
+                            <select id="devObtainMethod" class="input-field">
+                                <option value="شراء كاش">شراء كاش</option>
+                                <option value="استبدال">عن طريق استبدال</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>تاريخ الشراء *</label>
+                            <input type="date" id="devBuyDate" required class="input-field">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>الملحقات والمرفقات مع الجهاز</label>
+                            <input type="text" id="devAccessories" class="input-field"
+                                placeholder="مثال: علبة الأصلية، كابل الشحن الأصلي، كفر">
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>ملاحظات إضافية</label>
+                        <textarea id="devNotes" class="input-field" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="saveDeviceBtn">حفظ البيانات بالمخزن</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display:none;">إلغاء
+                            التعديل</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- 4. الأجهزة المباعة -->
+            <section id="sales" class="page-section">
+                <header class="page-header">
+                    <h1>سجل الأجهزة المباعة</h1>
+                    <div class="filter-bar">
+                        <input type="text" id="salesSearch" placeholder="بحث في الأجهزة المباعة..." class="input-field">
+                    </div>
+                </header>
+
+                <div class="stats-grid compact">
+                    <div class="stat-card">
+                        <span class="title">عدد الأجهزة المباعة</span>
+                        <span class="value" id="salesPageCount">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">إجمالي المبيعات</span>
+                        <span class="value" id="salesPageTotal">0 ج.م</span>
+                    </div>
+                    <div class="stat-card accent">
+                        <span class="title">إجمالي أرباح المبيعات</span>
+                        <span class="value" id="salesPageProfits">0 ج.م</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive card-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>اسم الجهاز</th>
+                                <th>اللون</th>
+                                <th>التكلفة الفعلية</th>
+                                <th>سعر البيع</th>
+                                <th>صافي الربح</th>
+                                <th>تاريخ البيع</th>
+                                <th>العميل</th>
+                                <th>طريقة الدفع</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 5. حركة الاستبدالات -->
+            <section id="exchanges" class="page-section">
+                <header class="page-header">
+                    <h1>إدارة عمليات الاستبدال (Trade-In)</h1>
+                </header>
+
+                <form id="exchangeForm" class="form-container">
+                    <h3>تسجيل عملية استبدال جديدة</h3>
+                    <div class="exchange-grid">
+                        <div class="exchange-box">
+                            <h4>1. الجهاز الخارج من المحل (مباع)</h4>
+                            <div class="form-group">
+                                <label>اختر الجهاز المتاح *</label>
+                                <select id="exOldDeviceId" required class="input-field"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>سعر التقييم/البيع للجهاز الخاص بك *</label>
+                                <input type="number" id="exOldTradeValue" step="any" required min="0"
+                                    class="input-field" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div class="exchange-box">
+                            <h4>2. الجهاز المستلم من العميل (يدخل المخزن)</h4>
+                            <div class="form-group">
+                                <label>اسم الجهاز المستلم *</label>
+                                <input type="text" id="exNewName" required class="input-field" placeholder="iPhone 12">
+                            </div>
+                            <div class="form-group">
+                                <label>الشركة واللون *</label>
+                                <div class="dual-inputs">
+                                    <input type="text" id="exNewBrand" required placeholder="الشركة"
+                                        class="input-field">
+                                    <input type="text" id="exNewColor" required placeholder="اللون" class="input-field">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>المساحة والرام</label>
+                                <input type="text" id="exNewSpecs" placeholder="128GB / 4GB RAM" class="input-field">
+                            </div>
+                            <div class="form-group">
+                                <label>سعر التقييم للجهاز المستلم (تكلفته عليك) *</label>
+                                <input type="number" id="exNewTradeValue" step="any" required min="0"
+                                    class="input-field" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-top:15px;">
+                        <div class="form-group">
+                            <label>تسوية فارق النقدية *</label>
+                            <select id="exDiffDirection" class="input-field">
+                                <option value="CUSTOMER_PAID">العميل دفع لي فارق كاش (+)</option>
+                                <option value="STORE_PAID">أنا دفعت للعميل فارق من الخزينة (-)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>مبلغ الفارق النقدي (ج.م) *</label>
+                            <input type="number" id="exDiffAmount" step="any" required min="0" value="0"
+                                class="input-field">
+                        </div>
+                        <div class="form-group">
+                            <label>تاريخ العملية</label>
+                            <input type="date" id="exDate" required class="input-field">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">تنفيذ وتثبيت عملية الاستبدال</button>
+                    </div>
+                </form>
+
+                <div class="card-table" style="margin-top: 25px;">
+                    <h3>سجل عمليات الاستبدال السابقة</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>الجهاز المخرج</th>
+                                    <th>الجهاز المستلم واللون</th>
+                                    <th>تسوية الفارق</th>
+                                    <th>الربح المحسوب</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exchangesHistoryTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. الخزينة والمصاريف الشاملة -->
+            <section id="finances" class="page-section">
+                <header class="page-header">
+                    <h1>إدارة الخزينة والسيولة النقدية والمصاريف</h1>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="title">رأس المال المبدئي</span>
+                        <span class="value" id="finInitialCapital">0 ج.م</span>
+                    </div>
+                    <div class="stat-card accent">
+                        <span class="title">السيولة المتاحة في الخزينة الآن</span>
+                        <span class="value" id="finCashInHand">0 ج.م</span>
+                    </div>
+                    <div class="stat-card danger">
+                        <span class="title">إجمالي المصروفات العامة</span>
+                        <span class="value danger-text" id="finTotalExpenses">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">إجمالي الدخل الإضافي الخارجية</span>
+                        <span class="value accent-text" id="finTotalIncome">0 ج.م</span>
+                    </div>
+                </div>
+
+                <div class="exchange-grid">
+                    <!-- نموذج المصاريف -->
+                    <form id="expenseForm" class="form-container">
+                        <h3>تسجيل مصروفات عامة (أين ذهبت الأموال؟)</h3>
+                        <div class="form-group">
+                            <label>بند المصروف / أين صرفت الفلوس؟ *</label>
+                            <input type="text" id="expTitle" required class="input-field"
+                                placeholder="إيجار، كهرباء، طعام، صيانة، نثريات">
+                        </div>
+                        <div class="form-group">
+                            <label>المبلغ المصروف (ج.م) *</label>
+                            <input type="number" id="expAmount" min="0.5" step="any" required class="input-field"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>التاريخ *</label>
+                            <input type="date" id="expDate" required class="input-field">
+                        </div>
+                        <button type="submit" class="btn btn-danger">تسجيل وخصم المصروف من الخزينة</button>
+                    </form>
+
+                    <!-- نموذج الدخل والإيداعات -->
+                    <form id="incomeForm" class="form-container">
+                        <h3>تسجيل دخل إضافي / إيداع خزينة</h3>
+                        <div class="form-group">
+                            <label>مصدر الدخل / البيان *</label>
+                            <input type="text" id="incTitle" required class="input-field"
+                                placeholder="بيع إكسسوارات، خدمات صيانة، تمويل إضافي">
+                        </div>
+                        <div class="form-group">
+                            <label>المبلغ المودع (ج.م) *</label>
+                            <input type="number" id="incAmount" min="0.5" step="any" required class="input-field"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>التاريخ *</label>
+                            <input type="date" id="incDate" required class="input-field">
+                        </div>
+                        <button type="submit" class="btn btn-primary">إضافة الدخل إلى الخزينة</button>
+                    </form>
+                </div>
+
+                <div class="dashboard-tables" style="margin-top: 25px;">
+                    <div class="card-table">
+                        <h3>سجل المصاريف والنثريات</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>البيان / وجه الصرف</th>
+                                        <th>المبلغ</th>
+                                        <th>التاريخ</th>
+                                        <th>إجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-table">
+                        <h3>سجل المقبوضات والدخل الإضافي</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>البيان / المصدر</th>
+                                        <th>المبلغ</th>
+                                        <th>التاريخ</th>
+                                        <th>إجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. التقارير والأرباح -->
+            <section id="profits" class="page-section">
+                <header class="page-header">
+                    <h1>التقارير المالية والأرباح</h1>
+                    <div class="filter-bar">
+                        <select id="profitsPeriodFilter" class="input-field">
+                            <option value="ALL">جميع الأوقات</option>
+                            <option value="TODAY">اليوم فقط</option>
+                            <option value="WEEK">آخر 7 أيام</option>
+                            <option value="MONTH">هذا الشهر</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div class="stats-grid">
+                    <div class="stat-card accent">
+                        <span class="title">صافي الأرباح عن الفترة المحددة</span>
+                        <span class="value" id="repPeriodProfits">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">متوسط ربح الجهاز المباع</span>
+                        <span class="value" id="repAvgProfit">0 ج.م</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">أعلى جهاز حقق ربحاً</span>
+                        <span class="value" id="repMaxProfitDev">-</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="title">أقل جهاز حقق ربحاً</span>
+                        <span class="value" id="repMinProfitDev">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. سجل العمليات -->
+            <section id="transactions" class="page-section">
+                <header class="page-header">
+                    <h1>سجل الحركة الكامل (System Logs)</h1>
+                </header>
+                <div class="card-table">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>التاريخ والوقت</th>
+                                    <th>نوع الحركة</th>
+                                    <th>التفاصيل الكاملة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activityLogTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. الإعدادات والنسخ الاحتياطي -->
+            <section id="settings" class="page-section">
+                <header class="page-header">
+                    <h1>إعدادات النظام ورأس المال</h1>
+                </header>
+
+                <div class="settings-grid">
+                    <div class="card-box">
+                        <h3>إعدادات رأس المال والنشاط التجاري</h3>
+                        <div class="form-group">
+                            <label>اسم المحل / المتجر</label>
+                            <input type="text" id="setStoreName" class="input-field" value="متجر الهواتف">
+                        </div>
+                        <div class="form-group">
+                            <label>رأس المال المبدئي للنشاط (ج.م)</label>
+                            <input type="number" id="setCapital" step="any" class="input-field" value="0">
+                        </div>
+                        <button id="saveStoreSettings" class="btn btn-primary">تحديث بيانات رأس المال</button>
+                    </div>
+
+                    <div class="card-box">
+                        <h3>أمان البيانات والنسخ الاحتياطي</h3>
+                        <p>بياناتك محفوظة بشكل تلقائي في المتصفح. يمكنك حفظ نسخة احتياطية في أي وقت واستعادتها لضمان
+                            الأمان الأقصى.</p>
+                        <div class="form-actions-inline" style="margin-top:10px;">
+                            <button id="exportDataBtn" class="btn btn-secondary">تصدير قاعدة البيانات (JSON)</button>
+                            <label for="importFile" class="btn btn-secondary">استرجاع بيانات من ملف</label>
+                            <input type="file" id="importFile" accept=".json" style="display:none;">
+                        </div>
+                    </div>
+
+                    <div class="card-box danger-zone">
+                        <h3>إعادة تهيئة النظام</h3>
+                        <p>تنبيه: مسح كافة البيانات المسجلة بالكامل وإعادة النظام كما كان أول مرة.</p>
+                        <button id="wipeDataBtn" class="btn btn-danger">تصفير النظام ومسح البيانات</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- نافذة البيع Pop-up Modal -->
+    <div id="sellModal" class="modal-overlay">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h3>إتمام عملية بيع جهاز</h3>
+                <button class="close-modal" id="closeSellModal">&times;</button>
+            </header>
+            <form id="sellForm">
+                <input type="hidden" id="sellDeviceId">
+                <div class="device-summary-box" id="sellDeviceSummary"></div>
+
+                <div class="form-group">
+                    <label>سعر البيع الفعلي (ج.م) *</label>
+                    <input type="number" id="sellPrice" required min="0" step="any" class="input-field"
+                        placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>تاريخ البيع *</label>
+                    <input type="date" id="sellDate" required class="input-field">
+                </div>
+                <div class="form-group">
+                    <label>طريقة تحصيل المبلغ *</label>
+                    <select id="sellPaymentMethod" class="input-field">
+                        <option value="كاش">كاش (تضاف للخزينة)</option>
+                        <option value="تحويل بنكي / محفظة">تحويل بنكي / محفظة فودافون كاش</option>
+                        <option value="آجل / تقسيط">آجل / تقسيط</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>اسم العميل ورقم الموبايل</label>
+                    <input type="text" id="sellCustomerName" class="input-field" placeholder="اسم العميل وملاحظات">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">تأكيد البيع وإيداع السعر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
